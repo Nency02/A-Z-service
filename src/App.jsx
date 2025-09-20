@@ -1,38 +1,44 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import Home from "./pages/Home";
-import About from "./pages/About";
-import Services from "./pages/Services";
-import Contact from "./pages/Contact";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Hero from "./components/Hero";
+import About from "./components/About";
+import Services from "./components/Services";
+import Contact from "./components/Contact";
 import Footer from "./components/Footer";
+import ServiceDetail from "./components/ServiceDetail";
+import Login from "./components/Login";
+import Signup from "./components/Signup";
+import ForgotPassword from "./components/ForgotPassword";
 import "./App.css";
 
 function App() {
   return (
-    <Router>
-      <div className="app-wrapper">
-        {/* Navbar */}
-        <nav className="navbar">
-          <Link to="/">Home</Link>
-          <Link to="/about">About</Link>
-          <Link to="/services">Services</Link>
-          <Link to="/contact">Contact</Link>
-        </nav>
+    <BrowserRouter>
+      <div className="app">
+        <Navbar />
+        <Routes>
 
-        {/* Main content */}
-        <main className="content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/contact" element={<Contact />} />
-          </Routes>
-        </main>
-
-        {/* Footer */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="*" element={<Login />} /> 
+          <Route path="/signup" element={<Signup />} />
+          <Route
+            path="/"
+            element={
+              <>
+                <Hero />
+                <About />
+                <Services />
+                <Contact />
+              </>
+            }
+          />
+          <Route path="/service/:serviceName" element={<ServiceDetail />} />
+        </Routes>
         <Footer />
       </div>
-    </Router>
+    </BrowserRouter>
   );
 }
 
