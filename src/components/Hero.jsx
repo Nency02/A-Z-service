@@ -1,6 +1,16 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 function Hero() {
+  const navigate = useNavigate();
+
+  const handleExploreServices = () => {
+    const element = document.getElementById("services");
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section id="hero" className="hero-section">
       <div className="hero-content">
@@ -8,7 +18,7 @@ function Hero() {
         <p>
           Leading multi-services provider in Gujarat. Fast, reliable, and quality-assured services for everyone!
         </p>
-        <a href="#services" className="hero-btn">Explore Services</a>
+        <button onClick={handleExploreServices} className="hero-btn">Explore Services</button>
       </div>
     </section>
   );
