@@ -45,6 +45,11 @@ function ServiceDetail() {
   const { serviceName } = useParams();
   const service = serviceData[serviceName];
 
+  const handleBackToServices = () => {
+    // Navigate to home page and scroll to services section
+    window.location.href = "/#services";
+  };
+
   if (!service) return <div className="service-detail-page">Service not found.</div>;
 
   return (
@@ -62,7 +67,7 @@ function ServiceDetail() {
           </div>
         ))}
       </div>
-      <Link to="/services" className="back-btn">← Back to Services</Link>
+      <button onClick={handleBackToServices} className="back-btn">← Back to Services</button>
     </div>
   );
 }
