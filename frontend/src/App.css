@@ -259,6 +259,8 @@ body {
   border: 1px solid #b3c6e0;
   font-size: 1rem;
   background-color: white;
+  
+  color: black;
 }
 
 .contact-form button {

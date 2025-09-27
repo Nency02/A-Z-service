@@ -14,7 +14,7 @@ function Hero() {
   return (
     <section id="hero" className="hero-section">
       <div className="hero-content">
-        <h1>A-Z Globe Gujarat</h1>
+        <h1>A-Z Service</h1>
         <p>
           Leading multi-services provider in Gujarat. Fast, reliable, and quality-assured services for everyone!
         </p>

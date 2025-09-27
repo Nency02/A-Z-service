@@ -41,7 +41,7 @@ function Navbar() {
             onClick={() => navigate("/")}
             style={{ cursor: "pointer" }}
           >
-            A-Z Globe Gujarat
+            A-Z Service
           </span>
 
           {/* Navigation Links */}
