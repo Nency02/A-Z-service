@@ -8,6 +8,39 @@ export const AuthProvider = ({ children }) => {
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check token validity on app start
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+      const storedUser = localStorage.getItem("user");
+      
+      if (token && storedUser) {
+        try {
+          const res = await fetch("http://localhost:5000/api/auth/verify", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            setUser(data.user);
+            localStorage.setItem("user", JSON.stringify(data.user));
+          } else {
+            // Token is invalid, clear auth data
+            logout();
+          }
+        } catch (error) {
+          console.error("Auth verification failed:", error);
+          logout();
+        }
+      }
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, []);
+
   useEffect(() => {
     if (user) localStorage.setItem("user", JSON.stringify(user));
     else localStorage.removeItem("user");
@@ -34,12 +67,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signup = async (name, email, password, role) => {
+  const signup = async (name, email, password, role, phone, address) => {
     try {
       const res = await fetch("http://localhost:5000/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ name, email, password, role, phone, address }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -58,8 +91,20 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("token");
   };
 
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      signup, 
+      logout, 
+      updateUser,
+      isLoading 
+    }}>
       {children}
     </AuthContext.Provider>
   );

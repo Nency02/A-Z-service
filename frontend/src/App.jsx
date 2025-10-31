@@ -16,6 +16,8 @@ import Profile from "./components/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ServiceProviderProfile from "./components/ServiceProviderProfile";
 import ServiceList from "./components/ServiceList";
+import ProviderDashboard from "./components/ProviderDashboard";
+
 import "./App.css";
 
 function App() {
@@ -34,9 +36,10 @@ function App() {
                   <Profile />
                 </ProtectedRoute>
               } />
+              <Route path="/provider/dashboard" element={<ProviderDashboard />} />
               <Route path="/provider-profile" element={<ServiceProviderProfile />} />
               <Route path="/service/:serviceName" element={<ServiceDetail />} />
-              <Route path="/services" element={<ServiceList />} />
+              <Route path="/services" element={<ServiceList />} />
               <Route
                 path="/"
                 element={

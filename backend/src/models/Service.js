@@ -1,12 +1,14 @@
 const mongoose = require("mongoose");
 
 const serviceSchema = new mongoose.Schema({
-  provider: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  title: String,
-  description: String,
-  category: String,
-  price: Number,
-  location: String,
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  category: { type: String, required: true },
+  price: { type: Number, required: true },
+  location: { type: String, required: true },
+  image: String,
+  provider: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
 });
 

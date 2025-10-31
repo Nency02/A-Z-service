@@ -96,7 +96,7 @@ function Navbar() {
             {user && user.role === "provider" && (
               <button
                 className="btn-primary"
-                onClick={() => navigate("/provider-profile")}
+                onClick={() => navigate("/provider/dashboard")}
               >
                 Provider Dashboard
               </button>
