@@ -36,10 +36,7 @@ app.use("/api/service", serviceRoutes);
 app.use("/api/booking", bookingRoutes);
 app.use("/api/employee", employeeRoutes);
 
-mongoose.connect("mongodb://localhost:27017/azservices", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => {
+mongoose.connect("mongodb://localhost:27017/azservices").then(() => {
   console.log("MongoDB connected");
   app.listen(5000, () => {
     console.log("Server running on port 5000");

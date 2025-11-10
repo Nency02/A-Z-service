@@ -1,72 +1,150 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { FaBroom, FaTools, FaBolt, FaLaptop, FaBug } from "react-icons/fa";
+import { FaBroom, FaTools, FaBolt, FaLaptop, FaBug, FaCar, FaPaintBrush, FaCamera, FaHome, FaWrench, FaMapMarkerAlt, FaPhone, FaEnvelope, FaStar } from "react-icons/fa";
 
-const serviceData = {
-  "Home Cleaning": {
-    icon: <FaBroom />,
-    companies: [
-      { name: "CleanPro Gujarat", description: "Expert home and office cleaning." },
-      { name: "Sparkle Services", description: "Eco-friendly deep cleaning." },
-      { name: "UrbanClean", description: "Affordable and reliable cleaning." }
-    ]
-  },
-  "Plumbing": {
-    icon: <FaTools />,
-    companies: [
-      { name: "PlumbRight", description: "24/7 plumbing solutions." },
-      { name: "AquaFix", description: "Leak repair and installation." }
-    ]
-  },
-  "Electrician": {
-    icon: <FaBolt />,
-    companies: [
-      { name: "ElectroCare", description: "Certified electricians for all needs." },
-      { name: "PowerPlus", description: "Quick and safe electrical services." }
-    ]
-  },
-  "IT Support": {
-    icon: <FaLaptop />,
-    companies: [
-      { name: "TechHelp Gujarat", description: "Computer and network support." },
-      { name: "IT Gurus", description: "Fast IT troubleshooting." }
-    ]
-  },
-  "Pest Control": {
-    icon: <FaBug />,
-    companies: [
-      { name: "PestAway", description: "Safe pest management." },
-      { name: "BugBusters", description: "Termite and rodent control." }
-    ]
-  }
+// Icon mapping for different service categories
+const getServiceIcon = (category) => {
+  const iconMap = {
+    'cleaning': <FaBroom />,
+    'plumbing': <FaTools />,
+    'electrician': <FaBolt />,
+    'it support': <FaLaptop />,
+    'pest control': <FaBug />,
+    'automotive': <FaCar />,
+    'painting': <FaPaintBrush />,
+    'photography': <FaCamera />,
+    'home services': <FaHome />,
+    'repair': <FaWrench />
+  };
+  return iconMap[category?.toLowerCase()] || <FaTools />;
 };
 
 function ServiceDetail() {
   const { serviceName } = useParams();
-  const service = serviceData[serviceName];
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchServicesByCategory();
+  }, [serviceName]);
+
+  const fetchServicesByCategory = async () => {
+    try {
+      setLoading(true);
+      // Map URL-friendly names back to database categories
+      const categoryMap = {
+        'Home Cleaning': 'cleaning',
+        'Plumbing': 'plumbing',
+        'Electrician': 'electrician',
+        'IT Support': 'it support',
+        'Pest Control': 'pest control'
+      };
+      
+      const category = categoryMap[serviceName] || serviceName.toLowerCase();
+      const response = await fetch(`http://localhost:5000/api/service/category/${category}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch services');
+      }
+      
+      const data = await response.json();
+      console.log('ServiceDetail API response:', data);
+      
+      // The API returns { services: [...] }, so we need to access data.services
+      const servicesList = data.services || [];
+      setServices(servicesList);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      setError(error.message);
+      setLoading(false);
+    }
+  };
 
   const handleBackToServices = () => {
     // Navigate to home page and scroll to services section
     window.location.href = "/#services";
   };
 
-  if (!service) return <div className="service-detail-page">Service not found.</div>;
+  if (loading) {
+    return (
+      <div className="service-detail-page">
+        <div className="service-header">
+          <h2>{serviceName}</h2>
+        </div>
+        <p>Loading services...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="service-detail-page">
+        <div className="service-header">
+          <h2>{serviceName}</h2>
+        </div>
+        <p>Error loading services: {error}</p>
+        <button onClick={handleBackToServices} className="back-btn">← Back to Services</button>
+      </div>
+    );
+  }
 
   return (
     <div className="service-detail-page">
       <div className="service-header">
-        <div className="service-icon">{service.icon}</div>
+        <div className="service-icon">{getServiceIcon(services[0]?.category)}</div>
         <h2>{serviceName}</h2>
       </div>
-      <h3>Available Companies</h3>
-      <div className="company-cards">
-        {service.companies.map((company, idx) => (
-          <div key={idx} className="company-card">
-            <h4>{company.name}</h4>
-            <p>{company.description}</p>
-          </div>
-        ))}
-      </div>
+      <h3>Available Service Providers ({services.length})</h3>
+      {services.length === 0 ? (
+        <div className="no-services">
+          <p>No service providers found for {serviceName}.</p>
+          <p>Be the first to register as a service provider!</p>
+        </div>
+      ) : (
+        <div className="company-cards">
+          {services.map((service) => (
+            <div key={service._id} className="company-card">
+              <div className="company-header">
+                {service.image && (
+                  <img 
+                    src={`http://localhost:5000${service.image}`} 
+                    alt={service.title}
+                    className="service-image"
+                    onError={(e) => {e.target.style.display = 'none'}}
+                  />
+                )}
+                <div>
+                  <h4>{service.title}</h4>
+                  <p className="provider-name">
+                    <FaMapMarkerAlt /> {service.provider?.name || 'Service Provider'}
+                  </p>
+                </div>
+              </div>
+              <p className="service-description">{service.description}</p>
+              <div className="service-details">
+                <div className="price">₹{service.price}</div>
+                {service.provider?.phone && (
+                  <div className="contact-info">
+                    <FaPhone /> {service.provider.phone}
+                  </div>
+                )}
+                {service.provider?.email && (
+                  <div className="contact-info">
+                    <FaEnvelope /> {service.provider.email}
+                  </div>
+                )}
+              </div>
+              {service.location && (
+                <p className="location">
+                  <FaMapMarkerAlt /> {service.location}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
       <button onClick={handleBackToServices} className="back-btn">← Back to Services</button>
     </div>
   );

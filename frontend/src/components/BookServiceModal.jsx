@@ -4,23 +4,28 @@ import { useNotification } from "../contexts/NotificationContext";
 import { useNavigate } from "react-router-dom";
 import CompanySelector from "./CompanySelector";
 import CompanyDetails from "./CompanyDetails";
-import { addBooking } from "../utils/bookingTracker";
+// Note: We now store bookings in the database, but keep this for backward compatibility if needed
+// import { addBooking } from "../utils/bookingTracker";
 import "./BookServiceModal.css";
 
-const serviceOptions = [
-  "Home Cleaning",
-  "Plumbing",
-  "Electrician",
-  "IT Support",
-  "Pest Control",
-  "Carpentry",
-  "Painting",
-  "Gardening",
-  "Appliance Repair",
-  "Security Services"
-];
+  const serviceOptions = [
+    "Cleaning",
+    "Plumbing", 
+    "Electrician",
+    "IT Support",
+    "Pest Control",
+    "Carpentry",
+    "Painting",
+    "Gardening",
+    "Appliance Repair",
+    "Security Services"
+  ];
 
-function BookServiceModal({ open, onClose }) {
+  // Map frontend display names to database categories if needed
+  const categoryMapping = {
+    "Home Cleaning": "cleaning",
+    "Cleaning": "cleaning"
+  };function BookServiceModal({ open, onClose, onBookingSuccess }) {
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -78,7 +83,7 @@ function BookServiceModal({ open, onClose }) {
     return true;
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -100,26 +105,72 @@ function BookServiceModal({ open, onClose }) {
       amount: selectedCompany.priceRange
     };
 
-    // Add booking to tracker
-    const booking = addBooking(bookingData);
-
-    setSubmitted(true);
-    showNotification(`Service request submitted successfully! ${selectedCompany.name} will contact you soon.`, "success");
-    
-    setTimeout(() => {
-      setSubmitted(false);
-      onClose();
-      setForm({ 
-        name: "", 
-        email: "", 
-        phone: "",
-        service: "", 
-        details: "",
-        preferredDate: "",
-        preferredTime: ""
+    // Send booking request to backend (also keep local tracker for immediate UI)
+    try {
+      const token = localStorage.getItem("token");
+      console.log("🚀 Sending booking request:", bookingData);
+      console.log("🔑 Token:", token ? "Present" : "Missing");
+      
+      const res = await fetch("http://localhost:5000/api/booking/book", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          // Send serviceId if selectedCompany has real service data
+          serviceId: selectedCompany?.id || null,
+          companyName: bookingData.company,
+          companyId: bookingData.companyId,
+          userName: bookingData.userName,
+          userEmail: bookingData.userEmail,
+          userPhone: bookingData.userPhone,
+          preferredDate: bookingData.preferredDate,
+          preferredTime: bookingData.preferredTime,
+          details: bookingData.details,
+          amount: bookingData.amount
+        })
       });
-      setSelectedCompany(null);
-    }, 2000);
+
+      const data = await res.json();
+      console.log("📨 Server response:", data);
+      console.log("📊 Response status:", res.status);
+      
+      if (!res.ok) {
+        console.error("❌ Booking failed:", data);
+        setError(data.error || "Failed to submit booking");
+        return;
+      }
+
+      // Note: No longer using local tracker since we're persisting to database
+      // Local tracker is no longer needed as data comes from the backend
+
+      setSubmitted(true);
+      showNotification(`Service request submitted successfully! ${selectedCompany.name} will contact you soon.`, "success");
+      
+      // Trigger callback to refresh parent component data
+      if (onBookingSuccess) {
+        onBookingSuccess(data.booking);
+      }
+
+      setTimeout(() => {
+        setSubmitted(false);
+        onClose();
+        setForm({ 
+          name: "", 
+          email: "", 
+          phone: "",
+          service: "", 
+          details: "",
+          preferredDate: "",
+          preferredTime: ""
+        });
+        setSelectedCompany(null);
+      }, 2000);
+    } catch (err) {
+      console.error("Network error booking:", err);
+      setError("Network error. Please try again later.");
+    }
   };
 
   return (
@@ -222,7 +273,7 @@ function BookServiceModal({ open, onClose }) {
             {/* Company Selection */}
             {form.service && (
               <CompanySelector
-                serviceName={form.service}
+                serviceName={categoryMapping[form.service] || form.service.toLowerCase()}
                 selectedCompany={selectedCompany}
                 onCompanySelect={setSelectedCompany}
               />

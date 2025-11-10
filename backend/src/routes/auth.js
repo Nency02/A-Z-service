@@ -113,12 +113,36 @@ router.get("/verify", authMiddleware, async (req, res) => {
       email: user.email,
       role: user.role,
       phone: user.phone,
-      address: user.address
+      address: user.address,
+      providerStats: user.providerStats
     };
     
     res.json({ user: userData });
   } catch (err) {
     console.error("Verify error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Get profile route  
+router.get("/profile", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ error: "User not found" });
+    
+    const userData = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+      address: user.address,
+      providerStats: user.providerStats
+    };
+    
+    res.json({ user: userData });
+  } catch (err) {
+    console.error("Profile error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });

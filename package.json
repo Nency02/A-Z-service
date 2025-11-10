@@ -1,5 +1,28 @@
 {
   "dependencies": {
-    "multer": "^2.0.2"
-  }
+    "multer": "^2.0.2",
+    "package.json": "^2.0.1"
+  },
+  "name": "a-zservices",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nency02/A-Z-service.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Nency02/A-Z-service/issues"
+  },
+  "homepage": "https://github.com/Nency02/A-Z-service#readme"
 }

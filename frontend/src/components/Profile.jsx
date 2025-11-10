@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -34,6 +34,54 @@ function Profile() {
   const [earnings, setEarnings] = useState(0);
 
   const [loading, setLoading] = useState(true);
+  
+  // Review modal state
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+
+  // Function to fetch booking data
+  const fetchBookingData = useCallback(() => {
+    if (!user) return;
+    
+    if (user.role === "provider") {
+      // Fetch bookings for provider's services
+      fetch(`http://localhost:5000/api/booking/provider`, {
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          setProviderBookings(data.bookings || []);
+        })
+        .catch(err => console.error("Error fetching provider bookings:", err));
+      
+      // Fetch provider stats (total earnings from database)
+      fetch(`http://localhost:5000/api/auth/profile`, {
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.user?.providerStats) {
+            setEarnings(data.user.providerStats.totalEarnings || 0);
+          }
+        })
+        .catch(err => console.error("Error fetching provider stats:", err));
+    } else {
+      // Fetch user's bookings
+      fetch(`http://localhost:5000/api/booking/my`, {
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const bookings = data.bookings || [];
+          setServiceHistory(bookings.filter(b => b.status === 'completed'));
+          setCurrentBookings(bookings.filter(b => ['pending', 'confirmed', 'in-progress'].includes(b.status)));
+          setUpcomingServices(bookings.filter(b => b.status === 'scheduled'));
+        })
+        .catch(err => console.error("Error fetching user bookings:", err));
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -60,35 +108,32 @@ function Profile() {
         .then(data => setEmployees(data.employees || []))
         .catch(err => console.error("Error fetching employees:", err));
 
-      // Fetch bookings for provider's services
-      fetch(`http://localhost:5000/api/booking/provider`, {
-        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-      })
-        .then(res => res.json())
-        .then(data => {
-          setProviderBookings(data.bookings || []);
-          // Calculate earnings
-          const total = (data.bookings || []).reduce((acc, b) => acc + (b.amount || 0), 0);
-          setEarnings(total);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
+      // Fetch booking data
+      fetchBookingData();
+      setLoading(false);
     } else {
-      // Fetch user's bookings
-      fetch(`http://localhost:5000/api/booking/my`, {
-        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-      })
-        .then(res => res.json())
-        .then(data => {
-          const bookings = data.bookings || [];
-          setServiceHistory(bookings.filter(b => b.status === 'completed'));
-          setCurrentBookings(bookings.filter(b => b.status === 'pending' || b.status === 'confirmed'));
-          setUpcomingServices(bookings.filter(b => b.status === 'scheduled'));
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
+      // Fetch booking data
+      fetchBookingData();
+      setLoading(false);
     }
-  }, [user, navigate]);
+  }, [user, navigate, fetchBookingData]);
+
+  // Listen for booking updates from other components
+  useEffect(() => {
+    const handleBookingUpdate = () => {
+      fetchBookingData();
+    };
+
+    window.addEventListener('bookingUpdated', handleBookingUpdate);
+    window.addEventListener('bookingCancelled', handleBookingUpdate);
+    window.addEventListener('bookingStatusChanged', handleBookingUpdate);
+    
+    return () => {
+      window.removeEventListener('bookingUpdated', handleBookingUpdate);
+      window.removeEventListener('bookingCancelled', handleBookingUpdate);
+      window.removeEventListener('bookingStatusChanged', handleBookingUpdate);
+    };
+  }, [fetchBookingData]);
 
   // Toggle service expansion
   const toggleServiceExpansion = (serviceId) => {
@@ -118,14 +163,25 @@ function Profile() {
   const handleCancelBooking = (bookingId) => {
     if (confirm('Are you sure you want to cancel this booking?')) {
       fetch(`http://localhost:5000/api/booking/${bookingId}/cancel`, {
-        method: 'PUT',
+        method: 'DELETE',
         headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
       })
         .then(res => res.json())
-        .then(() => {
-          setCurrentBookings(prev => prev.filter(b => b._id !== bookingId));
+        .then((data) => {
+          if (data.error) {
+            alert("Failed to cancel booking: " + data.error);
+            return;
+          }
+          // Refresh booking data from server
+          fetchBookingData();
+          // Emit event for real-time updates
+          window.dispatchEvent(new CustomEvent('bookingCancelled', { detail: { bookingId } }));
+          alert("Booking cancelled successfully!");
         })
-        .catch(err => console.error("Error canceling booking:", err));
+        .catch(err => {
+          console.error("Error canceling booking:", err);
+          alert("Failed to cancel booking");
+        });
     }
   };
 
@@ -154,6 +210,74 @@ function Profile() {
       <FaStar key={i} style={{ color: i < rating ? '#fbbf24' : '#d1d5db' }} />
     ));
   };
+
+  const updateBookingStatus = (bookingId, newStatus) => {
+    fetch(`http://localhost:5000/api/booking/${bookingId}/status`, {
+      method: 'PUT',
+      headers: { 
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ status: newStatus })
+    })
+      .then(res => res.json())
+      .then((data) => {
+        if (data.error) {
+          console.error("Update status error:", data.error);
+          alert("Failed to update booking status: " + data.error);
+          return;
+        }
+        // Refresh booking data
+        fetchBookingData();
+        // Emit event for real-time updates
+        window.dispatchEvent(new CustomEvent('bookingStatusChanged', { detail: { bookingId, newStatus } }));
+        alert(`Booking ${newStatus} successfully!`);
+      })
+      .catch(err => {
+        console.error("Error updating booking status:", err);
+        alert("Failed to update booking status");
+      });
+  };
+
+  const openReviewModal = (booking) => {
+    setSelectedBooking(booking);
+    setReviewRating(5);
+    setReviewComment("");
+    setShowReviewModal(true);
+  };
+
+  const submitReview = () => {
+    if (!selectedBooking) return;
+    
+    fetch(`http://localhost:5000/api/booking/${selectedBooking._id}/review`, {
+      method: 'POST',
+      headers: { 
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ 
+        rating: reviewRating,
+        comment: reviewComment 
+      })
+    })
+      .then(res => res.json())
+      .then((data) => {
+        if (data.error) {
+          alert("Failed to submit review: " + data.error);
+          return;
+        }
+        // Refresh booking data
+        fetchBookingData();
+        setShowReviewModal(false);
+        alert("Review submitted successfully!");
+      })
+      .catch(err => {
+        console.error("Error submitting review:", err);
+        alert("Failed to submit review");
+      });
+  };
+
+
 
   if (!user || loading) {
     return (
@@ -419,6 +543,7 @@ function Profile() {
         {user.role === "provider" && activeTab === 'bookings' && (
           <div className="provider-bookings-section">
             <h3>Bookings for My Services</h3>
+
             {providerBookings.length === 0 ? (
               <div className="empty-state"><FaCalendarAlt /><p>No bookings yet</p></div>
             ) : (
@@ -428,7 +553,8 @@ function Profile() {
                     <div className="service-header">
                       <div className="service-info">
                         <h4>{booking.service?.title || 'Service'}</h4>
-                        <p>Customer: {booking.user?.name || 'User'}</p>
+                        <p>Customer: {booking.customer?.name || 'User'}</p>
+                        {booking.customer?.phone && <p>📞 {booking.customer.phone}</p>}
                       </div>
                       <div className="service-status">
                         {getStatusIcon(booking.status)}
@@ -441,6 +567,48 @@ function Profile() {
                       <div className="detail"><span style={{fontSize:'18px'}}>₹</span><span>{booking.amount || booking.service?.price || 'Price TBD'}</span></div>
                     </div>
                     {booking.details && <div className="service-details-text"><p>{booking.details}</p></div>}
+                    
+                    {/* Status Update Controls */}
+                    <div className="booking-actions">
+                      {booking.status === 'pending' && (
+                        <>
+                          <button 
+                            className="status-btn confirm-btn" 
+                            onClick={() => updateBookingStatus(booking._id, 'confirmed')}
+                          >
+                            Confirm Booking
+                          </button>
+                          <button 
+                            className="status-btn cancel-btn" 
+                            onClick={() => updateBookingStatus(booking._id, 'cancelled')}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      )}
+                      {booking.status === 'confirmed' && (
+                        <button 
+                          className="status-btn progress-btn" 
+                          onClick={() => updateBookingStatus(booking._id, 'in-progress')}
+                        >
+                          Start Service
+                        </button>
+                      )}
+                      {booking.status === 'in-progress' && (
+                        <button 
+                          className="status-btn complete-btn" 
+                          onClick={() => updateBookingStatus(booking._id, 'completed')}
+                        >
+                          Mark Complete
+                        </button>
+                      )}
+                      {booking.status === 'completed' && booking.review?.rating && (
+                        <div className="review-display">
+                          <p>⭐ {booking.review.rating}/5</p>
+                          {booking.review.comment && <p>"{booking.review.comment}"</p>}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -460,8 +628,8 @@ function Profile() {
                   <div key={service._id} className="service-item completed">
                     <div className="service-header">
                       <div className="service-info">
-                        <h4>{service.service?.title || 'Service'}</h4>
-                        <p>{service.service?.provider?.name || 'Company'}</p>
+                        <h4>{service.service?.title || service.companyName || 'Service'}</h4>
+                        <p>{service.service?.provider?.name || service.companyName || service.service?.category || 'Service Provider'}</p>
                       </div>
                       <div className="service-status">
                         {getStatusIcon(service.status)}
@@ -471,9 +639,20 @@ function Profile() {
                     <div className="service-details">
                       <div className="detail"><FaCalendarAlt /><span>{new Date(service.date || service.createdAt).toLocaleDateString()}</span></div>
                       <div className="detail"><span style={{fontSize:'18px'}}>₹</span><span>{service.amount || service.service?.price || 'N/A'}</span></div>
-                      <div className="detail"><FaStar /><span>{renderStars(service.rating || 0)}</span></div>
+                      {service.review?.rating ? (
+                        <div className="detail"><FaStar /><span>{renderStars(service.review.rating)}</span></div>
+                      ) : (
+                        <div className="detail">
+                          <button 
+                            className="review-btn" 
+                            onClick={() => openReviewModal(service)}
+                          >
+                            <FaStar /> Rate Service
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    {service.review && <div className="service-review"><p>"{service.review}"</p></div>}
+                    {service.review?.comment && <div className="service-review"><p>"{service.review.comment}"</p></div>}
                   </div>
                 ))}
               </div>
@@ -492,8 +671,8 @@ function Profile() {
                   <div key={booking._id} className="service-item booking">
                     <div className="service-header">
                       <div className="service-info">
-                        <h4>{booking.service?.title || 'Service'}</h4>
-                        <p>{booking.service?.provider?.name || 'Company'}</p>
+                        <h4>{booking.service?.title || booking.companyName || 'Service'}</h4>
+                        <p>{booking.service?.provider?.name || booking.companyName || booking.service?.category || 'Service Provider'}</p>
                       </div>
                       <div className="service-status">
                         {getStatusIcon(booking.status)}
@@ -546,6 +725,57 @@ function Profile() {
           </div>
         )}
       </div>
+
+      {/* Review Modal */}
+      {showReviewModal && (
+        <div className="modal-overlay" onClick={() => setShowReviewModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Rate Your Service</h3>
+              <button className="close-btn" onClick={() => setShowReviewModal(false)}>
+                <FaTimes />
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="service-info">
+                <h4>{selectedBooking?.service?.title || selectedBooking?.companyName || 'Service'}</h4>
+                <p>{selectedBooking?.service?.provider?.name || 'Service Provider'}</p>
+              </div>
+              
+              <div className="rating-input">
+                <label>Rating:</label>
+                <div className="star-rating">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <FaStar 
+                      key={star}
+                      className={`star ${star <= reviewRating ? 'active' : ''}`}
+                      onClick={() => setReviewRating(star)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="comment-input">
+                <label>Comment (optional):</label>
+                <textarea
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  placeholder="Share your experience..."
+                  rows={4}
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="cancel-btn" onClick={() => setShowReviewModal(false)}>
+                Cancel
+              </button>
+              <button className="submit-btn" onClick={submitReview}>
+                Submit Review
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

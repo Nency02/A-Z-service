@@ -139,7 +139,14 @@ function Navbar() {
 
       {/* Book Service Modal */}
       {user && user.role === "customer" && (
-        <BookServiceModal open={modalOpen} onClose={() => setModalOpen(false)} />
+        <BookServiceModal 
+          open={modalOpen} 
+          onClose={() => setModalOpen(false)}
+          onBookingSuccess={() => {
+            // Trigger a custom event that Profile component can listen to
+            window.dispatchEvent(new CustomEvent('bookingUpdated'));
+          }}
+        />
       )}
     </>
   );

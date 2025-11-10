@@ -120,6 +120,78 @@ router.get("/my", authProvider, async (req, res) => {
   }
 });
 
+// Get all active services (public route)
+router.get("/", async (req, res) => {
+  try {
+    const services = await Service.find({ isActive: true })
+      .populate("provider", "name email phone address")
+      .sort({ createdAt: -1 });
+
+    console.log(`📋 Found ${services.length} active services`);
+    res.json({ services });
+  } catch (err) {
+    console.error("❌ Error fetching services:", err);
+    res.status(500).json({ error: "Failed to fetch services" });
+  }
+});
+
+// Get services by category (public route)
+router.get("/category/:category", async (req, res) => {
+  try {
+    const category = req.params.category;
+    console.log(`🔍 Searching for services with category: "${category}"`);
+    
+    // First try exact match
+    let services = await Service.find({ 
+      category: category, 
+      isActive: true 
+    })
+      .populate("provider", "name email phone address")
+      .sort({ createdAt: -1 });
+
+    // If no exact match, try case-insensitive partial match
+    if (services.length === 0) {
+      console.log(`🔍 No exact match found, trying case-insensitive search...`);
+      services = await Service.find({ 
+        category: { $regex: category, $options: 'i' }, 
+        isActive: true 
+      })
+        .populate("provider", "name email phone address")
+        .sort({ createdAt: -1 });
+    }
+
+    // If still no match, try finding services with similar keywords
+    if (services.length === 0) {
+      console.log(`� No case-insensitive match, trying keyword search...`);
+      const keywords = category.toLowerCase().split(' ');
+      const keywordRegex = keywords.map(word => `(${word})`).join('|');
+      
+      services = await Service.find({ 
+        $or: [
+          { category: { $regex: keywordRegex, $options: 'i' } },
+          { title: { $regex: keywordRegex, $options: 'i' } }
+        ],
+        isActive: true 
+      })
+        .populate("provider", "name email phone address")
+        .sort({ createdAt: -1 });
+    }
+
+    console.log(`�📋 Found ${services.length} services for category: ${category}`);
+    
+    // Log the actual categories in database for debugging
+    if (services.length === 0) {
+      const allServices = await Service.find({ isActive: true }, 'category title');
+      console.log(`💡 Available categories in database:`, allServices.map(s => s.category));
+    }
+    
+    res.json({ services });
+  } catch (err) {
+    console.error("❌ Error fetching services by category:", err);
+    res.status(500).json({ error: "Failed to fetch services" });
+  }
+});
+
 // Delete service route
 router.delete("/delete/:id", authProvider, async (req, res) => {
   try {
