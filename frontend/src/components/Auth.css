@@ -292,3 +292,263 @@
   color: white;
   border-color: #007bff;
 }
+
+/* Role Selection Styles */
+.role-selection {
+  max-width: 900px;
+  padding: 40px;
+}
+
+.role-selection-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 32px;
+  margin: 40px 0;
+}
+
+.role-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+
+.role-card:hover {
+  border-color: #4299e1;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+.role-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.role-card h3 {
+  color: #1a202c;
+  font-size: 1.5rem;
+  margin: 0 0 12px 0;
+  font-weight: 600;
+}
+
+.role-card p {
+  color: #4a5568;
+  margin: 0 0 20px 0;
+  font-size: 14px;
+}
+
+.role-features {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  text-align: left;
+}
+
+.role-features li {
+  color: #4a5568;
+  font-size: 14px;
+  margin: 8px 0;
+  padding-left: 8px;
+}
+
+.role-btn {
+  width: 100%;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.role-btn.customer {
+  background: #4299e1;
+  color: white;
+}
+
+.role-btn.provider {
+  background: #48bb78;
+  color: white;
+}
+
+.role-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* Form Sections */
+.signup-form {
+  max-width: 800px;
+  padding: 40px;
+}
+
+.form-section {
+  margin-bottom: 32px;
+  padding: 24px;
+  background: #f7fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.form-section h3 {
+  color: #1a202c;
+  font-size: 1.25rem;
+  margin: 0 0 20px 0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-section h3::before {
+  content: "📋";
+  font-size: 1rem;
+}
+
+.form-row {
+  margin-bottom: 16px;
+}
+
+.form-row input,
+.form-row select,
+.form-row textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.form-row input:focus,
+.form-row select:focus,
+.form-row textarea:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.form-row textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.back-btn {
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  color: #4a5568;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+  background: #f7fafc;
+  color: #2d3748;
+}
+
+.submit-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #4299e1, #3182ce);
+  color: white;
+  border: none;
+  padding: 16px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3182ce, #2c5282);
+  transform: translateY(-1px);
+}
+
+.submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff3d;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .role-selection-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .signup-form {
+    padding: 20px;
+  }
+  
+  .form-section {
+    padding: 16px;
+  }
+}
+
+/* Add this to your existing Auth.css */
+
+.role-selection-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin: 40px 0;
+}
+
+.role-btn.admin {
+  background: #9f7aea;
+  color: white;
+}
+
+.role-btn.admin:hover {
+  background: #805ad5;
+}
+
+/* Admin authorization section */
+.form-section small {
+  color: #666;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+  font-style: italic;
+}
+
+/* Admin card styling */
+.role-card:nth-child(3) .role-icon {
+  background: linear-gradient(135deg, #9f7aea, #805ad5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Responsive - stack cards vertically on mobile */
+@media (max-width: 768px) {
+  .role-selection-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}

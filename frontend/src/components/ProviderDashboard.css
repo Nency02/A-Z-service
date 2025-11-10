@@ -99,6 +99,23 @@
   letter-spacing: 0.5px;
 }
 
+.stat-card.rating-card {
+  background: linear-gradient(135deg, #fff7e6 0%, #fffbf0 100%);
+  border-left: 4px solid #fbbf24;
+}
+
+.stat-card.rating-card h3 {
+  color: #f59e0b;
+  font-size: 2.2rem;
+}
+
+.stat-card.rating-card small {
+  color: #92400e;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  display: block;
+}
+
 /* Dashboard Actions */
 .dashboard-actions {
   margin-bottom: 32px;
@@ -116,12 +133,33 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 16px rgba(0,74,173,0.3);
+  margin: 0 8px;
 }
 
 .action-btn:hover {
   background: #003d8f;
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0,74,173,0.4);
+}
+
+.action-btn.secondary {
+  background: #6c757d;
+  box-shadow: 0 4px 16px rgba(108,117,125,0.3);
+}
+
+.action-btn.secondary:hover {
+  background: #545b62;
+  box-shadow: 0 8px 25px rgba(108,117,125,0.4);
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.action-btn:disabled:hover {
+  transform: none;
 }
 
 /* Services List */

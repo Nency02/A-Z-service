@@ -270,4 +270,72 @@ router.delete("/delete/:id", authProvider, async (req, res) => {
   }
 });
 
+// Get provider reviews and rating
+router.get("/provider/:id/reviews", async (req, res) => {
+  try {
+    const providerId = req.params.id;
+    const User = require("../models/User");
+    const Booking = require("../models/Booking");
+    
+    console.log(`📊 Fetching reviews for provider: ${providerId}`);
+    
+    // Get provider info
+    const provider = await User.findById(providerId).select('name companyName providerStats');
+    
+    if (!provider) {
+      return res.status(404).json({ error: "Provider not found" });
+    }
+    
+    // Get provider's services
+    const services = await Service.find({ provider: providerId });
+    const serviceIds = services.map(s => s._id);
+    
+    // Get all bookings with reviews for this provider's services
+    const bookingsWithReviews = await Booking.find({
+      service: { $in: serviceIds },
+      'review.rating': { $exists: true }
+    })
+    .populate('customer', 'name')
+    .populate('service', 'title')
+    .sort({ 'review.reviewedAt': -1 });
+    
+    // Format reviews
+    const reviews = bookingsWithReviews.map(booking => ({
+      id: booking._id,
+      rating: booking.review.rating,
+      comment: booking.review.comment,
+      reviewedAt: booking.review.reviewedAt,
+      customer: booking.customer?.name || 'Anonymous',
+      service: booking.service?.title || 'Service'
+    }));
+    
+    const response = {
+      success: true,
+      provider: {
+        id: provider._id,
+        name: provider.name,
+        companyName: provider.companyName,
+        stats: provider.providerStats || {
+          totalReviews: 0,
+          averageRating: 0,
+          totalEarnings: 0,
+          completedBookings: 0
+        }
+      },
+      reviews: reviews,
+      totalReviews: reviews.length
+    };
+    
+    console.log(`✅ Found ${reviews.length} reviews for provider`);
+    res.json(response);
+    
+  } catch (err) {
+    console.error("❌ Error fetching provider reviews:", err);
+    res.status(500).json({ 
+      error: "Failed to fetch provider reviews", 
+      details: err.message 
+    });
+  }
+});
+
 module.exports = router;

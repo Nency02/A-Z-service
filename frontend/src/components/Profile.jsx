@@ -249,6 +249,8 @@ function Profile() {
   const submitReview = () => {
     if (!selectedBooking) return;
     
+    console.log(`🌟 Submitting review: Rating ${reviewRating}, Comment: "${reviewComment}"`);
+    
     fetch(`http://localhost:5000/api/booking/${selectedBooking._id}/review`, {
       method: 'POST',
       headers: { 
@@ -256,28 +258,39 @@ function Profile() {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({ 
-        rating: reviewRating,
+        rating: Number(reviewRating),
         comment: reviewComment 
       })
     })
       .then(res => res.json())
       .then((data) => {
+        console.log("Review submission response:", data);
+        
         if (data.error) {
+          console.error("Review submission error:", data.error);
           alert("Failed to submit review: " + data.error);
           return;
         }
-        // Refresh booking data
-        fetchBookingData();
-        setShowReviewModal(false);
-        alert("Review submitted successfully!");
+        
+        if (data.success) {
+          // Refresh booking data
+          fetchBookingData();
+          setShowReviewModal(false);
+          setSelectedBooking(null);
+          setReviewRating(5);
+          setReviewComment("");
+          alert("Review submitted successfully! ⭐");
+        } else {
+          alert("Review submitted successfully!");
+          fetchBookingData();
+          setShowReviewModal(false);
+        }
       })
       .catch(err => {
         console.error("Error submitting review:", err);
-        alert("Failed to submit review");
+        alert("Failed to submit review. Please try again.");
       });
   };
-
-
 
   if (!user || loading) {
     return (
@@ -322,14 +335,6 @@ function Profile() {
                 <div className="stat">
                   <span className="stat-number">{currentBookings.length}</span>
                   <span className="stat-label">Active Bookings</span>
-                </div>
-                <div className="stat">
-                  <span className="stat-number">
-                    {serviceHistory.length > 0 
-                      ? (serviceHistory.reduce((acc, b) => acc + (b.rating || 0), 0) / serviceHistory.length).toFixed(1)
-                      : '0.0'}
-                  </span>
-                  <span className="stat-label">Avg Rating</span>
                 </div>
               </>
             )}
@@ -413,7 +418,6 @@ function Profile() {
                 <div className="stats-grid">
                   <div className="stat-card"><FaHistory /><h4>{serviceHistory.length}</h4><p>Services Completed</p></div>
                   <div className="stat-card"><FaCalendarAlt /><h4>{currentBookings.length + upcomingServices.length}</h4><p>Active Bookings</p></div>
-                  <div className="stat-card"><FaStar /><h4>{serviceHistory.length > 0 ? (serviceHistory.reduce((acc, b) => acc + (b.rating || 0), 0) / serviceHistory.length).toFixed(1) : '0.0'}</h4><p>Average Rating</p></div>
                   <div className="stat-card"><span style={{fontSize:'24px'}}>₹</span><h4>{serviceHistory.reduce((acc, b) => acc + (b.amount || 0), 0)}</h4><p>Total Spent</p></div>
                 </div>
               </div>

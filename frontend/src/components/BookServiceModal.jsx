@@ -90,6 +90,22 @@ import "./BookServiceModal.css";
       return;
     }
 
+    // Extract numeric price from priceRange (e.g., "₹500-₹1000" -> 500)
+    const extractPrice = (priceRange) => {
+      if (!priceRange) return 0;
+      // Handle direct service price (number)
+      if (typeof priceRange === 'number') return priceRange;
+      // Handle service price as string
+      const match = priceRange.toString().match(/(\d+)/);
+      return match ? parseInt(match[1]) : 0;
+    };
+
+    const numericAmount = selectedCompany?.price 
+      ? extractPrice(selectedCompany.price) 
+      : extractPrice(selectedCompany?.priceRange);
+
+    console.log(`💰 Price extraction: ${selectedCompany?.priceRange || selectedCompany?.price} -> ${numericAmount}`);
+
     // Create booking data
     const bookingData = {
       userId: user.id,
@@ -102,7 +118,7 @@ import "./BookServiceModal.css";
       preferredDate: form.preferredDate,
       preferredTime: form.preferredTime,
       details: form.details,
-      amount: selectedCompany.priceRange
+      amount: numericAmount.toString() // Convert back to string as expected by backend
     };
 
     // Send booking request to backend (also keep local tracker for immediate UI)
