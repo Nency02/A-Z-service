@@ -51,6 +51,26 @@ function ProviderDashboard() {
       setLoading(true);
       setMessage("Refreshing stats...");
       
+      // First try the new earnings endpoint
+      const earningsResponse = await fetch("http://localhost:5000/api/booking/provider/earnings", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      
+      if (earningsResponse.ok) {
+        const earningsData = await earningsResponse.json();
+        if (earningsData.success) {
+          setProviderStats(prev => ({
+            ...prev,
+            totalEarnings: earningsData.totalEarnings,
+            completedBookings: earningsData.completedBookings
+          }));
+          setMessage(`Stats refreshed! Total earnings: ₹${earningsData.totalEarnings}${earningsData.wasUpdated ? ' (updated)' : ''}`);
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // Fallback to old refresh endpoint
       const response = await fetch("http://localhost:5000/api/auth/refresh-stats", {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` }
@@ -73,16 +93,16 @@ function ProviderDashboard() {
     }
   };
 
-  // Function to set test earnings
-  const setTestEarnings = async () => {
+  // Function to fix review count
+  const fixReviews = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
     try {
       setLoading(true);
-      setMessage("Setting test earnings...");
+      setMessage("Recalculating review count...");
       
-      const response = await fetch("http://localhost:5000/api/auth/test-earnings", {
+      const response = await fetch("http://localhost:5000/api/booking/provider/fix-reviews", {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -90,15 +110,19 @@ function ProviderDashboard() {
       const data = await response.json();
       
       if (data.success) {
-        setProviderStats(data.stats);
-        setMessage("Test earnings set! 💰 ₹5000");
-        setTimeout(() => setMessage(""), 3000);
+        setProviderStats(prev => ({
+          ...prev,
+          totalReviews: data.newReviews,
+          averageRating: data.newRating
+        }));
+        setMessage(`✅ Review count fixed! Changed from ${data.oldReviews} to ${data.newReviews} reviews`);
+        console.log("🔧 Review fix details:", data.reviewedBookings);
       } else {
-        setMessage("Failed to set test earnings: " + (data.error || "Unknown error"));
+        setMessage("Failed to fix review count: " + (data.error || "Unknown error"));
       }
     } catch (err) {
-      console.error("Error setting test earnings:", err);
-      setMessage("Failed to set test earnings");
+      console.error("Error fixing reviews:", err);
+      setMessage("Failed to fix review count");
     } finally {
       setLoading(false);
     }
@@ -110,20 +134,6 @@ function ProviderDashboard() {
     }
   }, [user]);
 
-  // Temporary test data for debugging
-  useEffect(() => {
-    console.log("🧪 Setting temporary test data for debugging");
-    setTimeout(() => {
-      setProviderStats({
-        totalEarnings: 7500,
-        completedBookings: 8,
-        totalReviews: 5,
-        averageRating: 4.5
-      });
-      console.log("✅ Test data set");
-    }, 2000);
-  }, []);
-
   const fetchData = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -134,7 +144,7 @@ function ProviderDashboard() {
       console.log("🚀 Fetching provider data...");
       
       // Fetch services
-      const servicesRes = await fetch("http://localhost:5000/api/service/provider/my-services", {
+      const servicesRes = await fetch("http://localhost:5000/api/service/my", {
         headers: { "Authorization": `Bearer ${token}` }
       });
       
@@ -143,7 +153,12 @@ function ProviderDashboard() {
         headers: { "Authorization": `Bearer ${token}` }
       });
 
-      // Fetch provider stats
+      // Fetch accurate earnings first
+      const earningsRes = await fetch("http://localhost:5000/api/booking/provider/earnings", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      // Fetch provider stats as fallback
       console.log("📊 Fetching user profile...");
       const userRes = await fetch("http://localhost:5000/api/auth/profile", {
         headers: { "Authorization": `Bearer ${token}` }
@@ -161,12 +176,38 @@ function ProviderDashboard() {
         console.log("✅ Employees loaded:", employeesData.employees?.length || 0);
       }
 
+      // Handle earnings data first
+      let statsFromEarnings = null;
+      if (earningsRes.ok) {
+        const earningsData = await earningsRes.json();
+        if (earningsData.success) {
+          statsFromEarnings = {
+            totalEarnings: earningsData.totalEarnings,
+            completedBookings: earningsData.completedBookings,
+            totalReviews: 0,
+            averageRating: 0
+          };
+          console.log("💰 Earnings data loaded:", statsFromEarnings);
+          if (earningsData.wasUpdated) {
+            console.log("✅ Provider earnings were recalculated and updated");
+          }
+        }
+      }
+
       if (userRes.ok) {
         const userData = await userRes.json();
         console.log("👤 Full user data received:", userData);
         if (userData.user && userData.user.providerStats) {
-          setProviderStats(userData.user.providerStats);
-          console.log("📊 Provider stats set:", userData.user.providerStats);
+          // Merge earnings data with provider stats
+          const userStats = userData.user.providerStats;
+          const finalStats = statsFromEarnings ? {
+            ...userStats,
+            totalEarnings: statsFromEarnings.totalEarnings,
+            completedBookings: statsFromEarnings.completedBookings
+          } : userStats;
+          
+          setProviderStats(finalStats);
+          console.log("📊 Provider stats set:", finalStats);
         } else if (userData.user) {
           // Initialize stats if not present
           const defaultStats = {
@@ -401,6 +442,9 @@ function ProviderDashboard() {
           <div className="stat-card">
             <h3>{providerStats.totalReviews}</h3>
             <p>Total Reviews</p>
+            <small style={{fontSize: '0.7rem', color: '#666'}}>
+              Click "Fix Review Count" if this seems incorrect
+            </small>
           </div>
           <div className="stat-card">
             <h3>₹{providerStats.totalEarnings ? providerStats.totalEarnings.toLocaleString() : '0'}</h3>
@@ -408,9 +452,6 @@ function ProviderDashboard() {
             <small style={{fontSize: '0.7rem', color: '#666'}}>
               {providerStats.totalEarnings > 0 ? `From ${providerStats.completedBookings} completed jobs` : 'No earnings yet'}
             </small>
-            <div style={{fontSize: '0.6rem', color: '#999', marginTop: '4px'}}>
-              Debug: {JSON.stringify(providerStats.totalEarnings)}
-            </div>
           </div>
           <div className="stat-card">
             <h3>{providerStats.completedBookings}</h3>
@@ -434,11 +475,11 @@ function ProviderDashboard() {
           </button>
           <button 
             className="action-btn secondary"
-            onClick={setTestEarnings}
+            onClick={fixReviews}
             disabled={loading}
-            style={{background: '#28a745'}}
+            style={{background: '#6f42c1', color: 'white'}}
           >
-            🧪 Set Test Earnings
+            ⭐ Fix Review Count
           </button>
         </div>
 

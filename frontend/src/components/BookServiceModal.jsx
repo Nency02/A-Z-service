@@ -193,155 +193,178 @@ import "./BookServiceModal.css";
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}>×</button>
-        <h2>Book a Service</h2>
+        
+        <div className="modal-header">
+          <h2>📋 Book a Service</h2>
+          <p className="modal-subtitle">Find and book professional services near you</p>
+        </div>
         
         {!user && (
-          <div style={{
-            margin: "16px 0", 
-            padding: "16px", 
-            backgroundColor: "#fff3cd", 
-            border: "1px solid #ffeaa7",
-            borderRadius: "8px",
-            color: "#856404",
-            textAlign: "center"
-          }}>
-            <div style={{marginBottom: "12px"}}>
-              Please login to book services and get personalized recommendations.
+          <div className="login-prompt">
+            <div className="login-prompt-content">
+              <div className="prompt-icon">🔐</div>
+              <div className="prompt-text">
+                <strong>Login Required</strong>
+                <p>Please login to book services and get personalized recommendations.</p>
+              </div>
             </div>
-            <button 
-              onClick={handleLoginRedirect}
-              style={{
-                background: "#004aad",
-                color: "white",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "14px",
-                fontWeight: "500"
-              }}
-            >
+            <button onClick={handleLoginRedirect} className="login-btn">
               Login Now
             </button>
           </div>
         )}
 
         {error && (
-          <div style={{
-            margin: "16px 0", 
-            padding: "12px", 
-            backgroundColor: "#f8d7da", 
-            border: "1px solid #f5c6cb",
-            borderRadius: "8px",
-            color: "#721c24"
-          }}>
+          <div className="error-message">
+            <span className="error-icon">⚠️</span>
             {error}
           </div>
         )}
 
         {submitted ? (
-          <div style={{margin: "32px 0", color: "#004aad", fontWeight: "bold", textAlign: "center"}}>
-            <div style={{fontSize: "48px", marginBottom: "16px"}}>✓</div>
-            <div>Thank you! Your service request has been submitted.</div>
-            <div style={{fontSize: "14px", marginTop: "8px", color: "#666"}}>
-              {selectedCompany?.name} will contact you within 24 hours to confirm the details.
+          <div className="success-message">
+            <div className="success-icon">✅</div>
+            <h3>Booking Submitted Successfully!</h3>
+            <p>Thank you! Your service request has been submitted.</p>
+            <div className="success-details">
+              <span className="company-name">{selectedCompany?.name}</span> will contact you within 24 hours to confirm the details.
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="modal-form">
-            <input
-              name="name"
-              type="text"
-              placeholder="Your Full Name"
-              value={form.name}
-              onChange={handleChange}
-              required
-            />
-            <input
-              name="email"
-              type="email"
-              placeholder="Your Email Address"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-            <input
-              name="phone"
-              type="tel"
-              placeholder="Your Phone Number"
-              value={form.phone}
-              onChange={handleChange}
-              required
-            />
-            <select
-              name="service"
-              value={form.service}
-              onChange={handleChange}
-              required
-              style={{padding: "12px", borderRadius: "8px", border: "1px solid #b3c6e0", background: "#f9fcff", fontSize: "16px"}}
-            >
-              <option value="">Select Service</option>
-              {serviceOptions.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            
-            {/* Company Selection */}
-            {form.service && (
-              <CompanySelector
-                serviceName={categoryMapping[form.service] || form.service.toLowerCase()}
-                selectedCompany={selectedCompany}
-                onCompanySelect={setSelectedCompany}
-              />
-            )}
-            
-            {/* Selected Company Details */}
-            {selectedCompany && (
-              <CompanyDetails company={selectedCompany} />
-            )}
-            
-            <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px"}}>
-              <input
-                name="preferredDate"
-                type="date"
-                placeholder="Preferred Date"
-                value={form.preferredDate}
-                onChange={handleChange}
-                style={{padding: "12px", borderRadius: "8px", border: "1px solid #b3c6e0", background: "#f9fcff"}}
-              />
-              <select
-                name="preferredTime"
-                value={form.preferredTime}
-                onChange={handleChange}
-                style={{padding: "12px", borderRadius: "8px", border: "1px solid #b3c6e0", background: "#f9fcff"}}
-              >
-                <option value="">Preferred Time</option>
-                <option value="morning">Morning (9 AM - 12 PM)</option>
-                <option value="afternoon">Afternoon (12 PM - 5 PM)</option>
-                <option value="evening">Evening (5 PM - 8 PM)</option>
-              </select>
+          <form onSubmit={handleSubmit} className="booking-form">
+            <div className="form-section">
+              <h3 className="section-title">👤 Personal Information</h3>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="name">Full Name *</label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={form.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="email">Email Address *</label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="your.email@example.com"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="phone">Phone Number *</label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    placeholder="+1 (555) 123-4567"
+                    value={form.phone}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="form-section">
+              <h3 className="section-title">🔧 Service Details</h3>
+              <div className="form-group">
+                <label htmlFor="service">Select Service Type *</label>
+                <select
+                  id="service"
+                  name="service"
+                  value={form.service}
+                  onChange={handleChange}
+                  required
+                  className="service-select"
+                >
+                  <option value="">Choose a service...</option>
+                  {serviceOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {/* Company Selection */}
+              {form.service && (
+                <div className="company-selection">
+                  <CompanySelector
+                    serviceName={categoryMapping[form.service] || form.service.toLowerCase()}
+                    selectedCompany={selectedCompany}
+                    onCompanySelect={setSelectedCompany}
+                  />
+                </div>
+              )}
+              
+              {/* Selected Company Details */}
+              {selectedCompany && (
+                <div className="company-details">
+                  <CompanyDetails company={selectedCompany} />
+                </div>
+              )}
+            </div>
+
+            <div className="form-section">
+              <h3 className="section-title">📅 Schedule & Details</h3>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="preferredDate">Preferred Date</label>
+                  <input
+                    id="preferredDate"
+                    name="preferredDate"
+                    type="date"
+                    value={form.preferredDate}
+                    onChange={handleChange}
+                    className="date-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="preferredTime">Preferred Time</label>
+                  <select
+                    id="preferredTime"
+                    name="preferredTime"
+                    value={form.preferredTime}
+                    onChange={handleChange}
+                    className="time-select"
+                  >
+                    <option value="">Select time slot</option>
+                    <option value="morning">🌅 Morning (9 AM - 12 PM)</option>
+                    <option value="afternoon">☀️ Afternoon (12 PM - 5 PM)</option>
+                    <option value="evening">🌆 Evening (5 PM - 8 PM)</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="details">Additional Details</label>
+                <textarea
+                  id="details"
+                  name="details"
+                  placeholder="Tell us more about what you need... (optional)"
+                  value={form.details}
+                  onChange={handleChange}
+                  rows={3}
+                  className="details-textarea"
+                />
+              </div>
             </div>
             
-            <textarea
-              name="details"
-              placeholder="Additional Details (optional)"
-              value={form.details}
-              onChange={handleChange}
-              rows={3}
-              style={{padding: "12px", borderRadius: "8px", border: "1px solid #b3c6e0", background: "#f9fcff", resize: "vertical"}}
-            />
-            <button type="submit" style={{
-              background: "#004aad",
-              color: "white",
-              border: "none",
-              padding: "12px 24px",
-              borderRadius: "8px",
-              fontSize: "16px",
-              fontWeight: "bold",
-              cursor: "pointer",
-              transition: "background 0.3s ease"
-            }}>
-              {selectedCompany ? `Book with ${selectedCompany.name}` : "Book Service Now"}
+            <button type="submit" className="submit-btn">
+              <span className="btn-text">
+                {selectedCompany ? `📞 Book with ${selectedCompany.name}` : "🚀 Submit Service Request"}
+              </span>
+              <span className="btn-arrow">→</span>
             </button>
           </form>
         )}

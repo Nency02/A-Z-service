@@ -32,7 +32,22 @@ const bookingSchema = new mongoose.Schema({
   
   // Service completion tracking
   completedAt: { type: Date },
-  earningsAdded: { type: Boolean, default: false }
+  earningsAdded: { type: Boolean, default: false },
+  
+  // Payment tracking
+  paymentStatus: {
+    type: String,
+    enum: ["pending", "paid", "failed", "refunded"],
+    default: "pending"
+  },
+  paymentDetails: {
+    transactionId: { type: String },
+    amount: { type: Number },
+    method: { type: String },
+    processedAt: { type: Date },
+    lastFourDigits: { type: String },
+    upiId: { type: String }
+  }
 });
 
 module.exports = mongoose.model("Booking", bookingSchema);

@@ -1,18 +1,20 @@
 /* Navbar */
 .navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
   height: 80px;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.95), rgba(118, 75, 162, 0.95));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 8px 32px rgba(102, 126, 234, 0.15);
-  z-index: 1000;
+  z-index: 9999 !important;
   display: flex;
   align-items: center;
   transition: all 0.3s ease;
+  margin: 0;
+  padding: 0;
 }
 
 .navbar.scrolled {
@@ -22,13 +24,15 @@
 
 /* Container - use grid for 3 sections */
 .navbar-container {
-  width: 100%;
+  width: 100% !important;
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
+  height: 100%;
+  position: relative;
 }
 
 /* Left - Logo */

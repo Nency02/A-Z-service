@@ -11,155 +11,105 @@ function ServiceManagement({ onMessage }) {
   }, []);
 
   const fetchServices = async () => {
+    const token = localStorage.getItem("token");
+    
     try {
       setLoading(true);
       
-      // Mock data - replace with actual API call
-      const mockServices = [
-        {
-          _id: "1",
-          title: "Professional House Cleaning",
-          category: "Cleaning",
-          price: 1500,
-          location: "Mumbai",
-          description: "Complete house cleaning with professional equipment",
-          image: null,
-          provider: {
-            _id: "p1",
-            name: "ABC Cleaning Services",
-            email: "abc@cleaning.com"
-          },
-          teamMembers: [
-            { name: "John Doe", role: "Cleaner", experience: "2 years" },
-            { name: "Jane Smith", role: "Supervisor", experience: "5 years" }
-          ],
-          isActive: true,
-          createdAt: new Date(2024, 0, 15),
-          bookingsCount: 25,
-          rating: 4.8,
-          reviews: 18
-        },
-        {
-          _id: "2",
-          title: "AC Repair & Maintenance",
-          category: "Repair",
-          price: 800,
-          location: "Delhi",
-          description: "Expert AC repair and maintenance services",
-          image: null,
-          provider: {
-            _id: "p2",
-            name: "XYZ Repair Solutions",
-            email: "xyz@repairs.com"
-          },
-          teamMembers: [
-            { name: "Mike Johnson", role: "Technician", experience: "4 years" }
-          ],
-          isActive: true,
-          createdAt: new Date(2024, 1, 22),
-          bookingsCount: 12,
-          rating: 4.5,
-          reviews: 8
-        },
-        {
-          _id: "3",
-          title: "Plumbing Services",
-          category: "Repair",
-          price: 600,
-          location: "Bangalore",
-          description: "Complete plumbing solutions for homes and offices",
-          image: null,
-          provider: {
-            _id: "p3",
-            name: "Home Care Experts",
-            email: "homecare@experts.com"
-          },
-          teamMembers: [
-            { name: "David Wilson", role: "Plumber", experience: "6 years" },
-            { name: "Sarah Brown", role: "Assistant", experience: "1 year" }
-          ],
-          isActive: true,
-          createdAt: new Date(2024, 2, 10),
-          bookingsCount: 30,
-          rating: 4.7,
-          reviews: 22
-        },
-        {
-          _id: "4",
-          title: "Carpet Cleaning",
-          category: "Cleaning",
-          price: 1200,
-          location: "Chennai",
-          description: "Deep carpet cleaning with eco-friendly products",
-          image: null,
-          provider: {
-            _id: "p1",
-            name: "ABC Cleaning Services",
-            email: "abc@cleaning.com"
-          },
-          teamMembers: [
-            { name: "Emma Davis", role: "Specialist", experience: "3 years" }
-          ],
-          isActive: false,
-          createdAt: new Date(2024, 3, 5),
-          bookingsCount: 8,
-          rating: 4.3,
-          reviews: 5
+      const response = await fetch("http://localhost:5000/api/admin/services", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
         }
-      ];
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("📊 Services fetched:", data);
       
-      setServices(mockServices);
+      setServices(data.services || []);
       
     } catch (err) {
       console.error("Error fetching services:", err);
-      onMessage("Failed to load services", "error");
+      onMessage("Failed to load services: " + err.message, "error");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteService = async (serviceId) => {
-    if (!window.confirm("Are you sure you want to delete this service? This action cannot be undone.")) {
+    if (!window.confirm("Are you sure you want to delete this service? This will also delete all associated bookings. This action cannot be undone.")) {
       return;
     }
 
+    const token = localStorage.getItem("token");
+
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`http://localhost:5000/api/admin/services/${serviceId}`, {
+        method: 'DELETE',
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("✅ Service deleted:", data);
       
+      // Remove from local state
       setServices(services.filter(service => service._id !== serviceId));
       onMessage("Service deleted successfully");
     } catch (err) {
       console.error("Error deleting service:", err);
-      onMessage("Failed to delete service", "error");
+      onMessage("Failed to delete service: " + err.message, "error");
     }
   };
 
   const handleToggleStatus = async (serviceId) => {
+    const token = localStorage.getItem("token");
+    
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await fetch(`http://localhost:5000/api/admin/services/${serviceId}/status`, {
+        method: 'PUT',
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("✅ Service status updated:", data);
       
       setServices(services.map(service => 
         service._id === serviceId 
-          ? { ...service, isActive: !service.isActive }
+          ? { ...service, isActive: data.service.isActive }
           : service
       ));
       
-      const service = services.find(s => s._id === serviceId);
-      onMessage(`Service ${service.isActive ? 'deactivated' : 'activated'} successfully`);
+      onMessage(`Service ${data.service.isActive ? 'activated' : 'deactivated'} successfully`);
     } catch (err) {
       console.error("Error toggling service status:", err);
-      onMessage("Failed to update service status", "error");
+      onMessage("Failed to update service status: " + err.message, "error");
     }
   };
 
-  const categories = ["all", ...new Set(services.map(service => service.category))];
+  const categories = ["all", ...new Set(services.map(service => service.category || 'Uncategorized'))];
   
   const filteredServices = services.filter(service => {
-    const matchesSearch = service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         service.provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         service.location.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (service.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (service.provider?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (service.location || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesCategory = filterCategory === "all" || service.category === filterCategory;
     
@@ -229,7 +179,7 @@ function ServiceManagement({ onMessage }) {
               {service.image ? (
                 <img 
                   src={`http://localhost:5000${service.image}`} 
-                  alt={service.title}
+                  alt={service.title || 'Service image'}
                 />
               ) : (
                 <div className="no-image">No Image</div>
@@ -237,24 +187,24 @@ function ServiceManagement({ onMessage }) {
             </div>
             
             <div className="service-info">
-              <h3>{service.title}</h3>
-              <p className="provider-name">By: {service.provider.name}</p>
+              <h3>{service.title || 'Untitled Service'}</h3>
+              <p className="provider-name">By: {service.provider?.name || 'Unknown Provider'}</p>
               
               <div className="service-details">
-                <span className="service-category">{service.category}</span>
-                <span className="service-price">₹{service.price}</span>
-                <span className="service-location">📍 {service.location}</span>
+                <span className="service-category">{service.category || 'Uncategorized'}</span>
+                <span className="service-price">₹{service.price || 0}</span>
+                <span className="service-location">📍 {service.location || 'Location not specified'}</span>
               </div>
               
-              <p className="service-description">{service.description}</p>
+              <p className="service-description">{service.description || 'No description available'}</p>
               
               <div className="service-metrics">
                 <div className="metric">
-                  <span className="metric-value">★ {service.rating}</span>
-                  <span className="metric-label">Rating ({service.reviews})</span>
+                  <span className="metric-value">★ {service.rating || 0}</span>
+                  <span className="metric-label">Rating ({service.reviews || 0})</span>
                 </div>
                 <div className="metric">
-                  <span className="metric-value">{service.bookingsCount}</span>
+                  <span className="metric-value">{service.bookingsCount || 0}</span>
                   <span className="metric-label">Bookings</span>
                 </div>
               </div>
@@ -262,12 +212,15 @@ function ServiceManagement({ onMessage }) {
               <div className="team-info">
                 <h4>Team Members:</h4>
                 <div className="team-list">
-                  {service.teamMembers.map((member, index) => (
+                  {(service.teamMembers || []).map((member, index) => (
                     <div key={index} className="team-member">
                       <span className="member-name">{member.name}</span>
                       <span className="member-role">({member.role})</span>
                     </div>
                   ))}
+                  {(!service.teamMembers || service.teamMembers.length === 0) && (
+                    <p className="no-team">No team members assigned</p>
+                  )}
                 </div>
               </div>
               

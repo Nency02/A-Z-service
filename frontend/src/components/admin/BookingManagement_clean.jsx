@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 function BookingManagement({ onMessage }) {
   const [bookings, setBookings] = useState([]);
@@ -28,7 +28,7 @@ function BookingManagement({ onMessage }) {
       }
 
       const data = await response.json();
-      console.log(" Bookings fetched:", data);
+      console.log("📊 Bookings fetched:", data);
       
       setBookings(data.bookings || []);
       
@@ -45,7 +45,7 @@ function BookingManagement({ onMessage }) {
     
     try {
       const response = await fetch(`http://localhost:5000/api/admin/bookings/${bookingId}/status`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
@@ -58,7 +58,7 @@ function BookingManagement({ onMessage }) {
       }
 
       const data = await response.json();
-      console.log(" Booking status updated:", data);
+      console.log("✅ Booking status updated:", data);
       
       setBookings(bookings.map(booking => 
         booking._id === bookingId 
@@ -75,11 +75,11 @@ function BookingManagement({ onMessage }) {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "completed": return "#48bb78";
-      case "confirmed": return "#4299e1";
-      case "pending": return "#ecc94b";
-      case "cancelled": return "#e53e3e";
-      default: return "#a0aec0";
+      case 'completed': return '#48bb78';
+      case 'confirmed': return '#4299e1';
+      case 'pending': return '#ecc94b';
+      case 'cancelled': return '#e53e3e';
+      default: return '#a0aec0';
     }
   };
 

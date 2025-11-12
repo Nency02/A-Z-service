@@ -102,6 +102,16 @@ function Navbar() {
               </button>
             )}
 
+            {/* Admin: Dashboard */}
+            {user && user.role === "admin" && (
+              <button
+                className="btn-primary"
+                onClick={() => navigate("/admin/dashboard")}
+              >
+                Admin Dashboard
+              </button>
+            )}
+
             {/* Profile Button */}
             {user && (
               <button

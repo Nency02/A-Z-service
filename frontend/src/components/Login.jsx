@@ -41,7 +41,17 @@ function Login() {
     const result = await login(form.email, form.password);
     setLoading(false);
     if (result.success) {
-      navigate("/");
+      // Redirect based on user role
+      const userRole = JSON.parse(localStorage.getItem("user"))?.role;
+      console.log("🚀 Login successful, user role:", userRole);
+      
+      if (userRole === 'admin') {
+        navigate("/admin/dashboard");
+      } else if (userRole === 'provider') {
+        navigate("/provider/dashboard");
+      } else {
+        navigate("/profile"); // For customers
+      }
     } else {
       setError(result.error || "Login failed. Please check your credentials.");
     }

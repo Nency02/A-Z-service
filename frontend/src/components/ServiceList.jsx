@@ -39,7 +39,7 @@ function ServiceList() {
   };
 
   return (
-    <div style={{ maxWidth: 800, margin: "40px auto" }}>
+    <div style={{ maxWidth: 800, margin: "120px auto 40px", padding: "0 20px" }}>
       <h2>Available Services</h2>
       {bookingStatus && <div style={{ color: "green", marginBottom: "12px" }}>{bookingStatus}</div>}
       <ul>

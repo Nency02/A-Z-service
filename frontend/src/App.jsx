@@ -12,11 +12,14 @@ import ServiceDetail from "./components/ServiceDetail";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import ForgotPassword from "./components/ForgotPassword";
+import ResetPassword from "./components/ResetPassword";
 import Profile from "./components/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ServiceProviderProfile from "./components/ServiceProviderProfile";
 import ServiceList from "./components/ServiceList";
 import ProviderDashboard from "./components/ProviderDashboard";
+import AdminDashboard from "./components/admin/AdminDashboard";
+import MyMessages from "./components/MyMessages";
 
 import "./App.css";
 
@@ -31,15 +34,22 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <Profile />
                 </ProtectedRoute>
               } />
               <Route path="/provider/dashboard" element={<ProviderDashboard />} />
+              <Route path="/admin/dashboard" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } />
               <Route path="/provider-profile" element={<ServiceProviderProfile />} />
               <Route path="/service/:serviceName" element={<ServiceDetail />} />
               <Route path="/services" element={<ServiceList />} />
+              <Route path="/my-messages" element={<MyMessages />} />
               <Route
                 path="/"
                 element={

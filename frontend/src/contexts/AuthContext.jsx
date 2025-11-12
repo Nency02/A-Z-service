@@ -55,11 +55,14 @@ export const AuthProvider = ({ children }) => {
       });
       const data = await res.json();
       if (res.ok) {
+        console.log("✅ Login successful, user data:", data.user);
+        console.log("🔑 User role:", data.user.role);
         setUser(data.user);
         localStorage.setItem("user", JSON.stringify(data.user));
         localStorage.setItem("token", data.token);
         return { success: true };
       } else {
+        console.log("❌ Login failed:", data.error);
         return { success: false, error: data.error || "Login failed" };
       }
     } catch (error) {
